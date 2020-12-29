@@ -198,12 +198,18 @@ function game(msg) {
         //msg.channel.send("Congradulations! You guessed my number!", {files: ["./trophy.png"]})
         text = "Congradulations! You guessed my number!";
 
+        // use "try" instead of "tries" if singular
+        var tries = " tries!"
+        if (player.count == 1) {
+            tries = " try!"
+        }
+
         // send back the congratulations message
         var attachment = new Discord.Attachment('./trophy.png', 'trophy.png');
 
         var embedMsg = new Discord.RichEmbed()
             .setColor("0ff517")
-            .setTitle(msg.author.username + ", Congradulations! You guessed my number in " + player.count + " tries!")
+            .setTitle(msg.author.username + ", Congradulations! You guessed my number in " + player.count + tries)
             .attachFile(attachment)
             .setImage('attachment://trophy.png');
 
@@ -212,6 +218,10 @@ function game(msg) {
         PLAYERS.splice(idx, 1) // remove the player from the array
         return
     } 
+
+    if (player.min == player.max) {
+        text = "You have one guess left: **" + player.min + "**!"
+    }
 
     // send back higher/lower message
     var embedMsg = new Discord.RichEmbed()
