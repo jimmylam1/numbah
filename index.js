@@ -56,24 +56,10 @@ bot.on('message', msg => {
         help(msg)
     } 
     else if (msg.content.startsWith('!num start')) {
-        var player = initialize_new_player(msg);
-
-        var embedMsg = new Discord.RichEmbed()
-            .setColor(player.color)
-            .setTitle(msg.author.username + ", Guess a number between **" + _MIN + "** and **" + _MAX + "**")
-
-        msg.channel.send(embedMsg);
+        start(msg)
     } 
     else if (msg.content == "!num stop") {
-        var idx = get_player_idx(msg.author.id)
-        if (idx >= 0) {
-            var embedMsg = new Discord.RichEmbed()
-                .setColor(PLAYERS[idx].color)
-                .setTitle(msg.author.username + ", I hope we can play again soon!")
-
-            msg.channel.send(embedMsg);
-            PLAYERS.splice(idx, 1) // remove the player from the array
-        }
+        stop(msg)
     } 
     else if (!isNaN(parseInt(msg))) {
         game(msg)
@@ -88,18 +74,19 @@ function help(msg) {
         .setColor("#ffdf00")
         .setTitle('Welcome to Numbah!')
         .setDescription("I can start a game where you try to guess a randomly generated number.\n\n" +
-                        "`!num start`\n\t\tStarts a game\n" +
+                        "`!num start <max>`\n\t\tStarts a game with an optional max value.\n" +
+                                            "\t\tIf max is omitted, it will default to 10,000.\n" +
                         "`!num stop`\n\t\tStops a game"
                        )
 
     msg.channel.send(embedMsg);
 }
-function initialize_new_player(msg) {
+function initialize_new_player(msg, _max=10000) {
     /* creates a new player and adds it to the PLAYERS array */
     var player = {
                     id: msg.author.id,
-                    min: _MIN,
-                    max: _MAX,
+                    min: 0,
+                    max: _max,
                     answer: Math.floor(Math.random() * (_MAX+1)),
                     count: 0,
                     color: COLORS[0]
@@ -126,6 +113,62 @@ function get_player_idx(id) {
 
     return -1;
 }
+function start(msg) {
+    var player = null;
+    var text = ""
+    
+    if (get_player_idx(msg.author.id) >= 0) {
+        if (msg.content == "!num start") {
+            // default max
+            initialize_new_player(msg)
+        }
+        else {
+            // user specified a max
+            var start_max = parseInt(msg.content.substr(12))
+            if (isNaN(start_max)) {
+                var embedMsg = new Discord.RichEmbed()
+                    .setColor("#FF0000")
+                    .setTitle(msg.author.username + ", I couldn't understand your max value 😕")
+                msg.channel.send(embedMsg);
+                return
+            }
+            else if (start_max < 1 || start_max > 9999999) {
+                var embedMsg = new Discord.RichEmbed()
+                    .setColor("#FF0000")
+                    .setTitle(msg.author.username + ", The max value is outside my range 😬")
+                msg.channel.send(embedMsg);
+                return
+            }
+            else {
+                initialize_new_player(msg, start_max)
+            }
+        }
+
+        player = PLAYERS[get_player_idx(msg.author.id)]
+        text = msg.author.username + ", Guess a number between **" + player.min + "** and **" + player.max + "**"
+    }
+    else {
+        player = PLAYERS[get_player_idx(msg.author.id)]
+        text = msg.author.username + ", You're already playing a game!"
+    }
+
+    var embedMsg = new Discord.RichEmbed()
+        .setColor(player.color)
+        .setTitle(text)
+
+    msg.channel.send(embedMsg);
+}
+function stop(msg) {
+    var idx = get_player_idx(msg.author.id)
+    if (idx >= 0) {
+        var embedMsg = new Discord.RichEmbed()
+            .setColor(PLAYERS[idx].color)
+            .setTitle(msg.author.username + ", I hope we can play again soon!")
+
+        msg.channel.send(embedMsg);
+        PLAYERS.splice(idx, 1) // remove the player from the array
+    }
+}
 function game(msg) {
     var idx = get_player_idx(msg.author.id)
     
@@ -147,10 +190,10 @@ function game(msg) {
     if ((guess < player.min) || (player.max < guess)) {
         text = "Out of bounds! \nGuess a number between **" + player.min + "** and **" + player.max + "**"
     } else if (guess < player.answer) {
-        player.min = guess
+        player.min = guess + 1
         text = "Higher!\nGuess a number between **" + player.min + "** and **" + player.max + "**"
     } else if (guess > player.answer) {
-        player.max = guess
+        player.max = guess - 1
         text = "Lower!\nGuess a number between **" + player.min + "** and **" + player.max + "**"
     } else {
         //msg.channel.send("Congradulations! You guessed my number!", {files: ["./trophy.png"]})
@@ -174,7 +217,8 @@ function game(msg) {
     // send back higher/lower message
     var embedMsg = new Discord.RichEmbed()
         .setColor(player.color)
-        .setTitle(msg.author.username + ", attempt #" + player.count + "\n" + text)
+        .setTitle(msg.author.username + ", attempt #" + player.count)
+        .setDescription(text)
 
     msg.channel.send(embedMsg);
 }
