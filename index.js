@@ -138,7 +138,7 @@ function start(msg) {
                 msg.channel.send(embedMsg);
                 return
             }
-            else if (start_max < 1 || start_max > 9999999) {
+            else if (start_max < 1 || start_max > 99999999) {
                 var embedMsg = new Discord.RichEmbed()
                     .setColor("#FF0000")
                     .setTitle(msg.author.username + ", The max value is outside my range 😬")
