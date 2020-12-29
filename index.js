@@ -35,8 +35,9 @@ var _MAX = 5000; // the maximum guess range
     }
 */
 var PLAYERS = []; // list of player objects (from above)
-// -->           red       orange     gold       green      blue       purple
-var COLORS = ["#FF0000", "#ffa500", "#ffd700", "#228b22", "#1e90ff", "#800080"]
+// -->         orange      blue       green      purple      gold     magenta     brown
+var COLORS = ["#ffa500", "#1e90ff", "#228b22", "#800080", "#ffd700", "#ff00ff", "#8b4513"]
+var COLOR_CNT = 0 // the current color index for COLORS 
 
 var ON_OFF = 1; // 1 = on, 0 = off, for num!on/off command
 
@@ -87,14 +88,13 @@ function initialize_new_player(msg, _max=10000) {
                     id: msg.author.id,
                     min: 0,
                     max: _max,
-                    answer: Math.floor(Math.random() * (_MAX+1)),
+                    answer: Math.floor(Math.random() * (_max+1)),
                     count: 0,
-                    color: COLORS[0]
+                    color: COLORS[COLOR_CNT % COLORS.length]
                 }
     PLAYERS.push(player)
 
-    // move the first elelemt in COLORS to end to cycle them
-    COLORS.push(COLORS.splice(0,1))
+    COLOR_CNT++
 
     return player
 }
@@ -114,17 +114,17 @@ function get_player_idx(id) {
     return -1;
 }
 function start(msg) {
-    var player = null;
+    var player = 0;
     var text = ""
     
-    if (get_player_idx(msg.author.id) >= 0) {
+    if (get_player_idx(msg.author.id) < 0) {
         if (msg.content == "!num start") {
             // default max
-            initialize_new_player(msg)
+            player = initialize_new_player(msg)
         }
         else {
             // user specified a max
-            var start_max = parseInt(msg.content.substr(12))
+            var start_max = parseInt(msg.content.substr(11))
             if (isNaN(start_max)) {
                 var embedMsg = new Discord.RichEmbed()
                     .setColor("#FF0000")
@@ -139,17 +139,16 @@ function start(msg) {
                 msg.channel.send(embedMsg);
                 return
             }
-            else {
-                initialize_new_player(msg, start_max)
-            }
+            player = initialize_new_player(msg, start_max)
         }
 
-        player = PLAYERS[get_player_idx(msg.author.id)]
+        // player = PLAYERS[get_player_idx(msg.author.id)]
         text = msg.author.username + ", Guess a number between **" + player.min + "** and **" + player.max + "**"
     }
     else {
-        player = PLAYERS[get_player_idx(msg.author.id)]
+        // player = PLAYERS[get_player_idx(msg.author.id)]
         text = msg.author.username + ", You're already playing a game!"
+        player = PLAYERS[get_player_idx(msg.author.id)]
     }
 
     var embedMsg = new Discord.RichEmbed()
