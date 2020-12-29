@@ -65,6 +65,12 @@ bot.on('message', msg => {
     else if (!isNaN(parseInt(msg))) {
         game(msg)
     } 
+    else if (msg.content == "!num test") {
+        var embedMsg = new Discord.RichEmbed()
+            .setColor("#ffa500")
+            .setTitle("<@" + msg.author.id + ">")
+        msg.channel.send(embedMsg);
+    }
 });
 
 /********************************
@@ -191,9 +197,15 @@ function game(msg) {
     } else if (guess < player.answer) {
         player.min = guess + 1
         text = "Higher!\nGuess a number between **" + player.min + "** and **" + player.max + "**"
+        if (player.min == player.max) {
+            text = "Higher!\nYou have one guess left: **" + player.min + "**!"
+        }
     } else if (guess > player.answer) {
         player.max = guess - 1
         text = "Lower!\nGuess a number between **" + player.min + "** and **" + player.max + "**"
+        if (player.min == player.max) {
+            text = "Lower!\nYou have one guess left: **" + player.min + "**!"
+        }
     } else {
         //msg.channel.send("Congradulations! You guessed my number!", {files: ["./trophy.png"]})
         text = "Congradulations! You guessed my number!";
@@ -218,10 +230,6 @@ function game(msg) {
         PLAYERS.splice(idx, 1) // remove the player from the array
         return
     } 
-
-    if (player.min == player.max) {
-        text = "You have one guess left: **" + player.min + "**!"
-    }
 
     // send back higher/lower message
     var embedMsg = new Discord.RichEmbed()
