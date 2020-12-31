@@ -1,4 +1,4 @@
-// Invite link: https://discord.com/api/oauth2/authorize?client_id=761673331388317717&permissions=34816&scope=bot
+// Invite link: https://discord.com/api/oauth2/authorize?client_id=769054680159879208&permissions=0&scope=bot
 
 var VERSION = "1.0";  // The current version of the bot. Include VERSION in git commit message!
 
@@ -51,6 +51,9 @@ bot.on('message', msg => {
         dm(msg)
     }
     if (on_off(msg) == 1) {return} // ignore all commands if bot is off 
+
+    // prevent bot from replying to other bots
+    if (msg.author.bot) {return}
 
     // Commands
     else if (msg.content == "!num help") {
@@ -193,7 +196,8 @@ function game(msg) {
 
     // check the guess with the player stats
     if ((guess < player.min) || (player.max < guess)) {
-        text = "Out of bounds! \nGuess a number between **" + player.min + "** and **" + player.max + "**"
+        text = "Out of bounds! \nGuess a number between **" + player.min + "** and **" + player.max + "**";
+        player.count--;
     } else if (guess < player.answer) {
         player.min = guess + 1
         text = "Higher!\nGuess a number between **" + player.min + "** and **" + player.max + "**"
