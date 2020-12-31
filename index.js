@@ -1,6 +1,6 @@
 // Invite link: https://discord.com/api/oauth2/authorize?client_id=769054680159879208&permissions=0&scope=bot
 
-var VERSION = "1.0";  // The current version of the bot. Include VERSION in git commit message!
+var VERSION = "1.";  // The current version of the bot. Include VERSION in git commit message!
 
 /********************************
    Initiation stuff on startup
@@ -71,7 +71,7 @@ bot.on('message', msg => {
     else if (msg.content == "!num test") {
         var embedMsg = new Discord.RichEmbed()
             .setColor("#ffa500")
-            .setTitle("<@" + msg.author.id + ">")
+            .setTitle("<@&" + msg.author.id + ">")
         msg.channel.send(embedMsg);
     }
 });
@@ -224,7 +224,7 @@ function game(msg) {
         var attachment = new Discord.Attachment('./trophy.png', 'trophy.png');
 
         var embedMsg = new Discord.RichEmbed()
-            .setColor("0ff517")
+            .setColor(player.color)
             .setTitle(msg.author.username + ", Congradulations! You guessed my number in " + player.count + tries)
             .attachFile(attachment)
             .setImage('attachment://trophy.png');
