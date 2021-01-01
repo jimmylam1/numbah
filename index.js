@@ -68,12 +68,6 @@ bot.on('message', msg => {
     else if (!isNaN(parseInt(msg))) {
         game(msg)
     } 
-    else if (msg.content == "!num test") {
-        var embedMsg = new Discord.RichEmbed()
-            .setColor("#ffa500")
-            .setTitle("<@&" + msg.author.id + ">")
-        msg.channel.send(embedMsg);
-    }
 });
 
 /********************************
@@ -177,7 +171,24 @@ function stop(msg) {
         PLAYERS.splice(idx, 1) // remove the player from the array
     }
 }
+function next_guess_values(player) {
+    if (player.min == player.max) {
+        return "You have one guess left: **" + player.min + "**!"
+    }
+    else if (player.max - player.min == 1) {
+        return "Choose either **" + player.min + "** or **" + player.max +"**!"
+    }
+    else {
+        return "Guess a number between **" + player.min + "** and **" + player.max + "**"
+    }
+}
 function game(msg) {
+    // exit if user did not enter just a number
+    var in_text = msg.content.split(" ").join("") // replace spaces with ""
+    if (parseInt(in_text).toString().length != in_text.length) {
+        return
+    }
+
     var idx = get_player_idx(msg.author.id)
     
     // exit if the current msg author is not in a game
@@ -196,20 +207,14 @@ function game(msg) {
 
     // check the guess with the player stats
     if ((guess < player.min) || (player.max < guess)) {
-        text = "Out of bounds! \nGuess a number between **" + player.min + "** and **" + player.max + "**";
+        text = "Out of bounds!\n" + next_guess_values(player)
         player.count--;
     } else if (guess < player.answer) {
         player.min = guess + 1
-        text = "Higher!\nGuess a number between **" + player.min + "** and **" + player.max + "**"
-        if (player.min == player.max) {
-            text = "Higher!\nYou have one guess left: **" + player.min + "**!"
-        }
+        text = "Higher!\n" + next_guess_values(player)
     } else if (guess > player.answer) {
         player.max = guess - 1
-        text = "Lower!\nGuess a number between **" + player.min + "** and **" + player.max + "**"
-        if (player.min == player.max) {
-            text = "Lower!\nYou have one guess left: **" + player.min + "**!"
-        }
+        text = "Lower!\n" + next_guess_values(player)
     } else {
         //msg.channel.send("Congradulations! You guessed my number!", {files: ["./trophy.png"]})
         text = "Congradulations! You guessed my number!";
