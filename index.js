@@ -1,6 +1,6 @@
 // Invite link: https://discord.com/api/oauth2/authorize?client_id=769054680159879208&permissions=0&scope=bot
 
-var VERSION = "1.2";  // The current version of the bot. Include VERSION in git commit message!
+var VERSION = "2.0";  // The current version of the bot. Include VERSION in git commit message!
 
 /********************************
    Initiation stuff on startup
@@ -74,7 +74,7 @@ bot.on('message', msg => {
        Response functions
  ********************************/
 function help(msg) {
-    var embedMsg = new Discord.RichEmbed()
+    var embedMsg = new Discord.MessageEmbed()
         .setColor("#ffdf00")
         .setTitle('Welcome to Numbah!')
         .setDescription("I can start a game where you try to guess a randomly generated number.\n\n" +
@@ -116,45 +116,48 @@ function get_player_idx(id) {
 
     return -1;
 }
+function send_error_embed(msg, text) {
+    var embedMsg = new Discord.MessageEmbed()
+                    .setColor("#FF0000")
+                    .setTitle(text)
+    msg.channel.send(embedMsg);
+    return embedMsg
+}
 function start(msg) {
     var player = 0;
     var text = ""
     
     if (get_player_idx(msg.author.id) < 0) {
+        // default max
         if (msg.content == "!num start") {
-            // default max
             player = initialize_new_player(msg)
         }
+        // user specified a max
         else {
-            // user specified a max
             var start_max = parseInt(msg.content.substr(11))
             if (isNaN(start_max)) {
-                var embedMsg = new Discord.RichEmbed()
-                    .setColor("#FF0000")
-                    .setTitle(msg.author.username + ", I couldn't understand your max value 😕")
-                msg.channel.send(embedMsg);
+                send_error_embed(msg, msg.member.displayName + ", I couldn't understand your max value 😕")
                 return
             }
             else if (start_max < 1 || start_max > 99999999) {
-                var embedMsg = new Discord.RichEmbed()
-                    .setColor("#FF0000")
-                    .setTitle(msg.author.username + ", The max value is outside my range 😬")
-                msg.channel.send(embedMsg);
+                send_error_embed(msg, msg.member.displayName + ", The max value is outside my range 😬")
                 return
             }
             player = initialize_new_player(msg, start_max)
         }
 
         // player = PLAYERS[get_player_idx(msg.author.id)]
-        text = msg.author.username + ", Guess a number between **" + player.min + "** and **" + player.max + "**"
+        text = msg.member.displayName + ", Guess a number between **" + player.min + "** and **" + player.max + "**"
     }
     else {
+        // someone tried using !num start while they're already playing a game
+
         // player = PLAYERS[get_player_idx(msg.author.id)]
-        text = msg.author.username + ", You're already playing a game!"
+        text = msg.member.displayName + ", You're already playing a game!"
         player = PLAYERS[get_player_idx(msg.author.id)]
     }
 
-    var embedMsg = new Discord.RichEmbed()
+    var embedMsg = new Discord.MessageEmbed()
         .setColor(player.color)
         .setTitle(text)
 
@@ -163,9 +166,9 @@ function start(msg) {
 function stop(msg) {
     var idx = get_player_idx(msg.author.id)
     if (idx >= 0) {
-        var embedMsg = new Discord.RichEmbed()
+        var embedMsg = new Discord.MessageEmbed()
             .setColor(PLAYERS[idx].color)
-            .setTitle(msg.author.username + ", I hope we can play again soon!")
+            .setTitle(msg.member.displayName + ", I hope we can play again soon!")
 
         msg.channel.send(embedMsg);
         PLAYERS.splice(idx, 1) // remove the player from the array
@@ -225,12 +228,12 @@ function game(msg) {
         }
 
         // send back the congratulations message
-        var attachment = new Discord.Attachment('./trophy.png', 'trophy.png');
+        var attachment = new Discord.MessageAttachment('./trophy.png', 'trophy.png');
 
-        var embedMsg = new Discord.RichEmbed()
+        var embedMsg = new Discord.MessageEmbed()
             .setColor(player.color)
-            .setTitle(msg.author.username + ", Congratulations! You guessed my number in " + player.count + tries)
-            .attachFile(attachment)
+            .setTitle(msg.member.displayName + ", Congratulations! You guessed my number in " + player.count + tries)
+            .attachFiles(attachment)
             .setImage('attachment://trophy.png');
 
         msg.channel.send(embedMsg);
@@ -240,9 +243,9 @@ function game(msg) {
     } 
 
     // send back higher/lower message
-    var embedMsg = new Discord.RichEmbed()
+    var embedMsg = new Discord.MessageEmbed()
         .setColor(player.color)
-        .setTitle(msg.author.username + ", attempt #" + player.count)
+        .setTitle(msg.member.displayName + ", attempt #" + player.count)
         .setDescription(text)
 
     msg.channel.send(embedMsg);
