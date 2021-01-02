@@ -1,6 +1,6 @@
 // Invite link: https://discord.com/api/oauth2/authorize?client_id=769054680159879208&permissions=0&scope=bot
 
-var VERSION = "1.";  // The current version of the bot. Include VERSION in git commit message!
+var VERSION = "1.2";  // The current version of the bot. Include VERSION in git commit message!
 
 /********************************
    Initiation stuff on startup
@@ -217,7 +217,7 @@ function game(msg) {
         text = "Lower!\n" + next_guess_values(player)
     } else {
         //msg.channel.send("Congradulations! You guessed my number!", {files: ["./trophy.png"]})
-        text = "Congradulations! You guessed my number!";
+        text = "Congratulations! You guessed my number!";
 
         // use "try" instead of "tries" if singular
         var tries = " tries!"
@@ -255,8 +255,8 @@ function dm(msg) {
     return
 }
 function on_off(msg) {
-    //    user:            jimmy                   pengu                walker
-    const id_list = ["660521636482514944", "734214960984490013", "335603474156748811"];
+    //    user:            jimmy                 
+    const id_list = ["660521636482514944"];
     var msg_sender = msg.author.id; 
     var m = msg.content;
 
