@@ -217,7 +217,6 @@ function game(msg) {
         text = "Lower!\n" + next_guess_values(player)
     } else {
         //msg.channel.send("Congradulations! You guessed my number!", {files: ["./trophy.png"]})
-        text = "Congratulations! You guessed my number!";
 
         // use "try" instead of "tries" if singular
         var tries = " tries!"
@@ -230,7 +229,7 @@ function game(msg) {
 
         var embedMsg = new Discord.RichEmbed()
             .setColor(player.color)
-            .setTitle(msg.author.username + ", Congradulations! You guessed my number in " + player.count + tries)
+            .setTitle(msg.author.username + ", Congratulations! You guessed my number in " + player.count + tries)
             .attachFile(attachment)
             .setImage('attachment://trophy.png');
 
