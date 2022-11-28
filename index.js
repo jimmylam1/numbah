@@ -234,13 +234,10 @@ function game(msg) {
         }
 
         // send back the congratulations message
-        var attachment = new Discord.MessageAttachment('./trophy.png', 'trophy.png');
-
         var embedMsg = new Discord.MessageEmbed()
             .setColor(player.color)
             .setTitle(msg.member.displayName + ", Congratulations! You guessed my number in " + player.count + tries)
-            .attachFiles(attachment)
-            .setImage('attachment://trophy.png');
+            .setImage('https://media.discordapp.net/attachments/956682030387720262/1046913740777455626/trophy.png');
 
         msg.channel.send({embeds: [embedMsg]}).catch(e => console.log("game congrats error", e))
 
