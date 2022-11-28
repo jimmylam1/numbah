@@ -45,10 +45,11 @@ var ON_OFF = 1; // 1 = on, 0 = off, for num!on/off command
     Message response commands
  ********************************/
 
-bot.on('message', msg => {
+bot.on('messageCreate', msg => {
     // important, disable DMs
     if (msg.channel.type == "dm") {
-        dm(msg)
+        return
+        // dm(msg)
     }
     if (on_off(msg) == 1) {return} // ignore all commands if bot is off 
 
