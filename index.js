@@ -1,6 +1,6 @@
 // Invite link: https://discord.com/api/oauth2/authorize?client_id=769054680159879208&permissions=0&scope=bot
 
-var VERSION = "2.0";  // The current version of the bot. Include VERSION in git commit message!
+var VERSION = "2.1";  // The current version of the bot. Include VERSION in git commit message!
 
 /********************************
    Initiation stuff on startup
@@ -8,7 +8,12 @@ var VERSION = "2.0";  // The current version of the bot. Include VERSION in git 
 
 require('dotenv').config();
 const Discord = require('discord.js');
-const bot = new Discord.Client();
+const bot = new Discord.Client({
+    intents: ["GUILDS", "GUILD_MESSAGES"],
+    makeCache: Discord.Options.cacheWithLimits({
+        MessageManager: 0
+    })
+});
 const TOKEN = process.env.TOKEN;
 
 bot.login(TOKEN);
@@ -51,7 +56,7 @@ bot.on('messageCreate', msg => {
         return
         // dm(msg)
     }
-    if (on_off(msg) == 1) {return} // ignore all commands if bot is off 
+    // if (on_off(msg) == 1) {return} // ignore all commands if bot is off 
 
     // prevent bot from replying to other bots
     if (msg.author.bot) {return}
@@ -84,7 +89,7 @@ function help(msg) {
                         "`!num stop`\n\t\tStops a game"
                        )
 
-    msg.channel.send(embedMsg);
+    msg.channel.send({embeds: [embedMsg]}).catch(e => console.log("help error", e))
 }
 function initialize_new_player(msg, _max=10000) {
     /* creates a new player and adds it to the PLAYERS array */
@@ -121,7 +126,7 @@ function send_error_embed(msg, text) {
     var embedMsg = new Discord.MessageEmbed()
                     .setColor("#FF0000")
                     .setTitle(text)
-    msg.channel.send(embedMsg);
+    msg.channel.send({embeds: [embedMsg]}).catch(e => console.log("send error error", e))
     return embedMsg
 }
 function start(msg) {
@@ -162,7 +167,7 @@ function start(msg) {
         .setColor(player.color)
         .setTitle(text)
 
-    msg.channel.send(embedMsg);
+    msg.channel.send({embeds: [embedMsg]}).catch(e => console.log("start error", e))
 }
 function stop(msg) {
     var idx = get_player_idx(msg.author.id)
@@ -171,7 +176,7 @@ function stop(msg) {
             .setColor(PLAYERS[idx].color)
             .setTitle(msg.member.displayName + ", I hope we can play again soon!")
 
-        msg.channel.send(embedMsg);
+        msg.channel.send({embeds: [embedMsg]});
         PLAYERS.splice(idx, 1) // remove the player from the array
     }
 }
@@ -237,7 +242,7 @@ function game(msg) {
             .attachFiles(attachment)
             .setImage('attachment://trophy.png');
 
-        msg.channel.send(embedMsg);
+        msg.channel.send({embeds: [embedMsg]}).catch(e => console.log("game congrats error", e))
 
         PLAYERS.splice(idx, 1) // remove the player from the array
         return
@@ -249,7 +254,7 @@ function game(msg) {
         .setTitle(msg.member.displayName + ", attempt #" + player.count)
         .setDescription(text)
 
-    msg.channel.send(embedMsg);
+    msg.channel.send({embeds: [embedMsg]}).catch(e => console.log("help hl error", e))
 }
 function dm(msg) {
     message = "Sorry, I can't respond to DMs at the moment :("
