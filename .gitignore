@@ -1,0 +1,7 @@
+*.env
+_index*
+node_modules/
+teamLogos.json
+src/im_test.js
+mongoBackups/
+.DS_Store
