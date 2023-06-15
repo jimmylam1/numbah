@@ -7,21 +7,14 @@ const files = [
 	["numbah.js", 80]
 ]
 const logWebhookClient = new Discord.WebhookClient({
-    url: "https://discord.com/api/webhooks/1049172140626300948/QGmC68tx9sW7wAcpFK7dkcJ7-47lDbDYrvCk22p6AlCmBcfJ_9I2hdIlqiD-JnRJ0tVE"
+    url: process.env.WEBHOOK_URL
 })
 
 let sendLogs = process.env.BETA ? false : true
 
-if (files.length != 1) {
-	console.log(`‼️ index.js may not be running all processes. Check before deploying!`)
-}
-
 for (const [fname, color] of files) {
-	if (fname)
-		runProcess(fname, color)
+	runProcess(fname, color)
 }
-
-let failedLogs = []
 
 function runProcess(fname, color=255) {
 	console.log(`⑂ Forking ${fname}`)
@@ -52,8 +45,6 @@ function runProcess(fname, color=255) {
                 logWebhookClient.send(`[<t:${Math.round(Date.now() / 1000)}:D> <t:${Math.round(Date.now() / 1000)}:T>] ${data.toString()}`)
                 .catch(e => {
                     console.log(`logWebhookClient error: ${e}`)
-                    // failedLogs.push(`[<t:${Math.round(Date.now() / 1000)}:D> <t:${Math.round(Date.now() / 1000)}:T>] ${data.toString()}`)
-                    // sendLogs()
                 })
             }
         })
@@ -64,8 +55,6 @@ function runProcess(fname, color=255) {
                 logWebhookClient.send(`[<t:${Math.round(Date.now() / 1000)}:D> <t:${Math.round(Date.now() / 1000)}:T>] ${data.toString()}`)
                 .catch(e => {
                     console.log(`logWebhookClient error: ${e}`)
-                    // failedLogs.push(`[<t:${Math.round(Date.now() / 1000)}:D> <t:${Math.round(Date.now() / 1000)}:T>] ${data.toString()}`)
-                    // sendLogs()
                 })
             }
         })
@@ -74,12 +63,3 @@ function runProcess(fname, color=255) {
         console.log(`> Failed to create child process for ${fname}: ${e}`)
     }
 }
-
-// sendLogs() {
-//     setTimeout(() => {
-//         let combined = failedLogs.join("\n")
-
-
-//     }, 10*60*1000)
-// }
-

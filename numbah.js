@@ -1,11 +1,5 @@
 // Invite link: https://discord.com/api/oauth2/authorize?client_id=769054680159879208&permissions=0&scope=bot
 
-var VERSION = "2.1";  // The current version of the bot. Include VERSION in git commit message!
-
-/********************************
-   Initiation stuff on startup
- ********************************/
-
 require('dotenv').config();
 const Discord = require('discord.js');
 const fs = require('fs')
@@ -17,62 +11,66 @@ const bot = new Discord.Client({
         PresenceManager: 0
     })
 });
+const VERSION = "2.1"
 const TOKEN = process.env.TOKEN;
 
 bot.login(TOKEN);
 
-/********************************
-        Global variables
- ********************************/
-var _MIN = 0; // the minumum guess range
-var _MAX = 5000; // the maximum guess range
-
 /*  ** PLAYERS object **
-    { id: user ID of discord user
-      min: the minimum guess
-      max: the max guess
-      answer: random number
-      count: the number of attempts
-      color: the embed msg color to display
+    { 
+        id: user ID of discord user
+        min: the minimum guess
+        max: the max guess
+        answer: random number
+        count: the number of attempts
+        color: the embed msg color to display
     }
 */
 var PLAYERS = []; // list of player objects (from above)
-// -->         orange      blue       green      purple      gold     magenta     brown
-var COLORS = ["#ffa500", "#1e90ff", "#228b22", "#800080", "#ffd700", "#ff00ff", "#8b4513"]
-var COLOR_CNT = 0 // the current color index for COLORS 
-
-var ON_OFF = 1; // 1 = on, 0 = off, for num!on/off command
-
-var hasChanged = false
 var usedHashes = [] // used by getColor()
 
 bot.on('ready', () => {
     console.info(`Logged in as ${bot.user.tag}! verion ${VERSION}`);
     bot.user.setPresence({game: {name: `Guessing Game | !num help`}, type: "PLAYING"});
+    loadData()
+});
+
+/********************************
+        Load/save data
+ ********************************/
+
+function loadData() {
     if (fs.existsSync("saveData.json")) {
-        let data = fs.readFileSync("saveData.json", "utf8")
-        let parsedData = JSON.parse(data)
+        var data = fs.readFileSync("saveData.json", "utf8")
+        var parsedData = JSON.parse(data)
         PLAYERS = parsedData.game
         usedHashes = parsedData.usedHashes
     }
+}
 
-    //bot.user.setAvatar("./profile3.png");
-});
+function saveData() {
+    // should probably use db if the bot is used a lot
+    var data = {
+        game: PLAYERS,
+        usedHashes
+    }
+    fs.writeFileSync("saveData.json", JSON.stringify(data))
+}
 
 /********************************
     Message response commands
  ********************************/
 
 bot.on('messageCreate', msg => {
-    // important, disable DMs
+    // disable DMs
     if (msg.channel.type == "dm") {
         return
-        // dm(msg)
     }
-    // if (on_off(msg) == 1) {return} // ignore all commands if bot is off 
 
     // prevent bot from replying to other bots
-    if (msg.author.bot) {return}
+    if (msg.author.bot) {
+        return
+    }
 
     // Commands
     else if (msg.content == "!num help") {
@@ -104,6 +102,7 @@ function help(msg) {
 
     msg.channel.send({embeds: [embedMsg]}).catch(e => console.log("help error", e))
 }
+
 function initialize_new_player(msg, _max=10000) {
     /* creates a new player and adds it to the PLAYERS array */
     var player = {
@@ -116,63 +115,53 @@ function initialize_new_player(msg, _max=10000) {
     }
 
     PLAYERS.push(player)
-    COLOR_CNT++
-
     return player
 }
+
 function get_player_idx(id) {
     /* attempts to find the player in the PLAYERS array that
        matches the id paramter. returns -1 if player cannot 
        be found, otherwise returns the player object.
     */
-    var array_len = PLAYERS.length;
-
-    for (var i = 0; i < array_len; i++) {
-        if (id == PLAYERS[i].id) {
-            return i
-        }
-    }
-
-    return -1;
+    return PLAYERS.findIndex(p => p.id == id)
 }
+
 function send_error_embed(msg, text) {
     var embedMsg = new Discord.MessageEmbed()
                     .setColor("#FF0000")
                     .setTitle(text)
     msg.channel.send({embeds: [embedMsg]}).catch(e => console.log("send error error", e))
-    return embedMsg
 }
+
 function start(msg) {
+    var args = msg.content.split(/\s+/g)
     var player = 0;
     var text = ""
     
     if (get_player_idx(msg.author.id) < 0) {
         // default max
-        if (msg.content == "!num start") {
+        if (args.length == 2) {
             player = initialize_new_player(msg)
         }
         // user specified a max
         else {
-            var start_max = parseInt(msg.content.substr(11))
+            var start_max = parseInt(args[2])
             if (isNaN(start_max)) {
-                send_error_embed(msg, msg.member.displayName + ", I couldn't understand your max value 😕")
+                send_error_embed(msg, `${msg.member.displayName}, I couldn't understand your max value 😕`)
                 return
             }
             else if (start_max < 1 || start_max > 99999999) {
-                send_error_embed(msg, msg.member.displayName + ", The max value is outside my range 😬")
+                send_error_embed(msg, `${msg.member.displayName}, The max value is outside my range 😬`)
                 return
             }
             player = initialize_new_player(msg, start_max)
         }
 
-        // player = PLAYERS[get_player_idx(msg.author.id)]
-        text = msg.member.displayName + ", Guess a number between **" + player.min + "** and **" + player.max + "**"
+        text = `${msg.member.displayName}, Guess a number between **${player.min}** and **${player.max}**`
     }
     else {
         // someone tried using !num start while they're already playing a game
-
-        // player = PLAYERS[get_player_idx(msg.author.id)]
-        text = msg.member.displayName + ", You're already playing a game! Use `!num stop` to stop."
+        text =`${msg.member.displayName}, You're already playing a game! Use \`!num stop\` to stop.`
         player = PLAYERS[get_player_idx(msg.author.id)]
     }
 
@@ -180,21 +169,23 @@ function start(msg) {
         .setColor(player.color)
         .setTitle(text)
 
-    hasChanged = true
     msg.channel.send({embeds: [embedMsg]}).catch(e => console.log("start error", e))
+    saveData()
 }
+
 function stop(msg) {
     var idx = get_player_idx(msg.author.id)
     if (idx >= 0) {
         var embedMsg = new Discord.MessageEmbed()
             .setColor(PLAYERS[idx].color)
-            .setTitle(msg.member.displayName + ", I hope we can play again soon!")
+            .setTitle(`${msg.member.displayName}, I hope we can play again soon!`)
 
-        hasChanged = true
         msg.channel.send({embeds: [embedMsg]}).catch(e => console.log("Stop send error", e))
         PLAYERS.splice(idx, 1) // remove the player from the array
+        saveData()
     }
 }
+
 function next_guess_values(player) {
     if (player.min == player.max) {
         return "You have one guess left: **" + player.min + "**!"
@@ -206,23 +197,17 @@ function next_guess_values(player) {
         return "Guess a number between **" + player.min + "** and **" + player.max + "**"
     }
 }
+
 function game(msg) {
     // exit if user did not enter just a number
-    var in_text = msg.content.split(" ").join("") // replace spaces with ""
-    if (parseInt(in_text).toString().length != in_text.length) {
+    if (!/^\d+$/.test(msg.content))
         return
-    }
 
     var idx = get_player_idx(msg.author.id)
     
     // exit if the current msg author is not in a game
-    if (idx == -1) { 
-        // msg.channel.send("ERROR 0")
+    if (idx == -1)
         return
-    } 
-
-    // the game itself
-    hasChanged = true
 
     var player = PLAYERS[idx];
     var guess = parseInt(msg);
@@ -241,80 +226,29 @@ function game(msg) {
         player.max = guess - 1
         text = "Lower!\n" + next_guess_values(player)
     } else {
-        //msg.channel.send("Congradulations! You guessed my number!", {files: ["./trophy.png"]})
-
-        // use "try" instead of "tries" if singular
-        var tries = " tries!"
-        if (player.count == 1) {
-            tries = " try!"
-        }
+        var tries = player.count == 1 ? "try" : "tries"
 
         // send back the congratulations message
         var embedMsg = new Discord.MessageEmbed()
             .setColor(player.color)
-            .setTitle(msg.member.displayName + ", Congratulations! You guessed my number in " + player.count + tries)
+            .setTitle(`${msg.member.displayName}, Congratulations! You guessed my number in ${player.count} ${tries}!`)
             .setImage('https://media.discordapp.net/attachments/956682030387720262/1046913740777455626/trophy.png');
 
         msg.channel.send({embeds: [embedMsg]}).catch(e => console.log("game congrats error", e))
 
         PLAYERS.splice(idx, 1) // remove the player from the array
+        saveData()
         return
     } 
 
     // send back higher/lower message
     var embedMsg = new Discord.MessageEmbed()
         .setColor(player.color)
-        .setTitle(msg.member.displayName + ", attempt #" + player.count)
+        .setTitle(`${msg.member.displayName}, attempt #${player.count}`)
         .setDescription(text)
 
     msg.channel.send({embeds: [embedMsg]}).catch(e => console.log("help hl error", e))
-}
-function dm(msg) {
-    message = "Sorry, I can't respond to DMs at the moment :("
-    msg.author.send(message).catch(err => console.error(err));
-    console.log("\n>>> Someone is DMing Numbah:" + msg.channel.recipient.username + "\n")
-    return
-}
-function on_off(msg) {
-    //    user:            jimmy                 
-    const id_list = ["660521636482514944"];
-    var msg_sender = msg.author.id; 
-    var m = msg.content;
-
-    // only do this if statement if msg.content is on/off AND is from a dev
-    if ((m == "num!on" || m == "num!off") && id_list.indexOf(msg_sender) >= 0) {
-        // turn off if it is on
-        if (ON_OFF == 1) {
-            ON_OFF = 0;
-            bot.user.setPresence({status: 'dnd'});
-            msg.channel.send("I am now **OFF**")
-            .then(message => {
-                setTimeout(function() {
-                    message.delete();
-                }, 5000);
-            })
-
-        } 
-        else {
-            ON_OFF = 1;
-            bot.user.setPresence({status: 'online'});
-            msg.channel.send("I am now **ON**")
-            .then(message => {
-                setTimeout(function() {
-                    message.delete();
-                }, 5000);
-            })
-        }
-        return 1; 
-    }
-    // everything else, just check if bot is on or off
-    else {
-        if (ON_OFF == 1) {
-            return 0
-        } else {
-            return 1
-        }
-    }
+    saveData()
 }
 
 /********************************
@@ -387,21 +321,3 @@ function rgbToHex(r, g, b)
 	
     return "#" + ((1 << 24) + (Math.floor(r) << 16) + (Math.floor(g) << 8) + Math.floor(b)).toString(16).slice(1)
 }
-
-
-/********************************
-        Interval Manager
- ********************************/
-
-setInterval(() => {
-    if (!hasChanged)
-        return
-
-    let data = {
-        game: PLAYERS,
-        usedHashes
-    }
-
-    fs.writeFileSync("saveData.json", JSON.stringify(data))
-    hasChanged = false
-}, 10000)
